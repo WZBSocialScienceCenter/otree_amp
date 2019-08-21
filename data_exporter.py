@@ -1,0 +1,22 @@
+import sys
+
+from otreeutils import scripts
+
+
+if len(sys.argv) != 2:
+    print('Call script like this: python %s <output.json>' % sys.argv[0])
+    exit(1)
+
+output_file = sys.argv[1]
+
+apps = ['amp']
+
+print('loading data for apps: %s...' % str(apps))
+
+combined = scripts.get_hierarchical_data_for_apps(apps)
+
+print('writing data to file', output_file)
+
+scripts.save_data_as_json_file(combined, output_file, indent=2)
+
+print('done.')

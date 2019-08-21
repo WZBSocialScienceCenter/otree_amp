@@ -1,0 +1,35 @@
+{% extends "amp/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Introduction to AMP experiment
+{% endblock %}
+
+{% block content %}
+
+<div id="instructions_container">
+    <p>
+        The following task records your behavior under distracting conditions. You will be presented two pictures in very quick succession.
+        The first picture is a picture of an animal.
+    </p>
+
+    <p>
+        The second picture is that of a Chinese character. After that, a picture with a black and white pattern will be shown.
+        The succession of the pictures is very quick. Please focus on the second picture with the Chinese character.<br>
+        Your task is to decide whether you find the shown Chinese character more or less appealing than an average Chinese character.
+    </p>
+
+    <p>
+        If you find the Chinese character rather unappealing, press <span class="key">[Q]</span>.
+        If you find the Chinese character rather appealing, press <span class="key">[P]</span>.
+    </p>
+
+    <p>
+        Please notice that there are no right or wrong answers. Decide according to your immediate feelings and as fast as possible.
+    </p>
+
+</div>
+
+{% next_button %}
+
+{% endblock %}

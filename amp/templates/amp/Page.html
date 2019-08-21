@@ -1,0 +1,36 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+{# Affect Misattribution Procedure (AMP) experiment #}
+{# Base page styles for all AMP pages #}
+{# August 2019, Markus Konrad <markus.konrad@wzb.eu> #}
+
+{% block app_styles %}
+
+
+
+<style>
+
+#instructions_container ul.keys {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#instructions_container ul.keys li {
+    display: inline;
+    padding: 0 3em 0 0;
+}
+
+#instructions_container span.key {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+#instructions_container .final_notice {
+    color: darkblue;
+}
+
+</style>
+
+{% endblock %}

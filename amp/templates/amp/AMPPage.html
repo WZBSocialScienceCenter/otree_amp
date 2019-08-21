@@ -1,0 +1,483 @@
+{% extends "amp/Page.html" %}
+{% load otree static %}
+
+{# Affect Misattribution Procedure (AMP) experiment #}
+{# AMP page implementation to display AMP experiment #}
+{# August 2019, Markus Konrad <markus.konrad@wzb.eu> #}
+
+{% block styles %}
+<style>
+#instructions_container .final_notice,
+#submit_data_notice {
+    display: none;
+}
+
+#progress_container {
+    width: 100%;
+    height: 20px;
+    display: none;
+    margin-bottom: 1em;
+}
+
+#progress_bar_container {
+    width: 80%;
+    height: 20px;
+    border: 1px solid black;
+    float: right;
+}
+
+#progress_bar {
+    width: 0;
+    height: 18px;
+    background: darkgray;
+}
+
+#disp_container {
+    display: none;
+    background: white;           /* blank screen color */
+    width:256px; height: 256px;  /* should match target and prime image sizes */
+    margin: 2em auto 0 auto;
+}
+
+#disp_img {
+    display: none;
+}
+
+#hurry_up_message {
+    display: none;
+}
+
+#key_labels {
+    display: none;
+    position: relative;
+    width: 100%;
+    margin-top: 5em;
+    z-index: 100;
+}
+
+#key_labels div {
+    font-size: 1.5em;
+    border: 1px solid black;
+    background: white;
+    padding: 0.5em;
+}
+
+/*
+define where to display the input key labels
+change this if other keys should be used for input
+*/
+
+#key_labels .Q {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+#key_labels .P {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block title %}
+    AMP experiment {% if is_practice %}- practice trials{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if not is_practice %}
+    {# submit data is stored in these hidden inputs as comma separated values strings #}
+    <input id="input_trial_ids" name="trial_ids" type="hidden" value="">
+    <input id="input_responses" name="responses" type="hidden" value="">
+    <input id="input_response_times" name="response_times" type="hidden" value="">
+{% endif %}
+
+<div id="experiment_container">
+    <h3 id="trial_title"></h3>
+
+    <div id="progress_container">
+        Progress:
+        <div id="progress_bar_container">
+            <div id="progress_bar"></div>
+        </div>
+        <div style="clear: right"></div>
+    </div>
+
+    <div id="instructions_container">
+        {% if is_practice %}
+            <p>You may do some practice trials before starting the real experiment.</p>
+        {% else %}
+            {% if subsession.round_number == 1 %}
+                <p>You successfully finished the number of practice trials. We will now start with the real test and do
+                    {{ Constants.num_rounds }} repetitions.</p>
+            {% else %}
+                <p>You finished repetition block {{ subsession.round_number|add:-1 }} of {{ Constants.num_rounds }}.</p>
+            {% endif %}
+        {% endif %}
+
+        {% if subsession.round_number == 1 %}
+            <p>
+                Remember:
+            </p>
+
+            <ul class="keys">
+                {% for key, label in Constants.capture_keycodes.values %}
+                    <li><span class="key">[{{ key }}]</span> &mdash; {{ label }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+         
+        {% if is_practice %}
+            <p>
+                If you're ready, please put your index finger on both keys and press <span class="key">[SPACE]</span>
+                for some practice trials.
+            </p>
+        {% else %}
+            <p>
+                If you're ready, please put your index finger on both keys and press <span class="key">[SPACE]</span>
+                in order to start the test.
+            </p>
+        {% endif %}
+
+        <p class="prepare_notice">
+            Experiment wird vorbereitet...
+        </p>
+
+        <p class="final_notice">
+            {% if is_practice %}
+                Please press <span class="key">[SPACE]</span> in order to start the <strong>practice trials</strong>.
+            {% else %}
+                Please press <span class="key">[SPACE]</span> in order to start the <strong>test</strong>.
+            {% endif %}
+        </p>
+    </div>
+
+    <div id="hurry_up_message" class="alert alert-warning">
+        Please try to respond more quickly.
+    </div>
+
+    <p id="submit_data_notice">
+        Data is being transmitted...
+    </p>
+
+    <div id="disp_container">
+        <img id="disp_img" alt="displayed image" width="100%" height="100%">
+    </div>
+
+    <div id="key_labels">
+        {% for key, label in Constants.capture_keycodes.values %}
+            <div class="{{ key }}"><span class="key">[{{ key }}]</span> &mdash; {{ label }}</div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="next_button_container" style="display: none">
+    {% next_button %}
+</div>
+
+<script>
+// set constants
+
+var IMGROOT_MASK = "{% static 'amp/mask.png' %}";
+{# to find out the correct path to the images, use *any existent* file in the prime and target samples folders #}
+{% if is_practice %}  {# directory when in "practice" mode #}
+    var prime_sample_file = "{% static 'amp/primes_practice/a1.jpg' %}";
+    var target_sample_file = "{% static 'amp/targets_practice/pic37.png' %}";
+    var IMGROOT_PRIMES = prime_sample_file.substring(0, prime_sample_file.lastIndexOf('/'));
+    var IMGROOT_TARGETS = target_sample_file.substring(0, target_sample_file.lastIndexOf('/'));
+{% else %}            {# directory when in real deal mode #}
+    var prime_sample_file = "{% static 'amp/primes/prime_a/01t.jpg' %}";
+    var target_sample_file = "{% static 'amp/targets/neg/t_neg01.png' %}";
+    var IMGROOT_PRIMES = prime_sample_file.substring(0, prime_sample_file.lastIndexOf('/prime_a/'));
+    var IMGROOT_TARGETS = target_sample_file.substring(0, target_sample_file.lastIndexOf('/neg/'));
+{% endif %}
+
+
+var CAPTURE_KEYCODES = Object.keys({{ Constants.capture_keycodes|json }});
+
+// create array of trial data: each row contains trial ID, target class, target, prime class, prime
+var trials = [
+    {% for t in trials %}
+        [{{ t.pk }}, '{{ t.target_class }}', '{{ t.target }}', '{{ t.prime_class }}', '{{ t.prime }}'],
+    {% endfor %}
+];
+
+var n_trials = trials.length;
+var cur_trial_idx = 0;    // state variable: current index into `trials`
+
+// collected data for each trial:
+var trial_ids = [];
+var response_keys = [];
+var response_times = [];
+
+/**
+ * Advance to display next trial.
+ */
+function nextTrial() {
+    document.onkeyup = null;   // disable input monitoring
+
+    {% if Constants.hurry_up_message_after_ms %}
+        $('#hurry_up_message').hide();   // hide message
+    {% endif %}
+
+    var progress_pct = cur_trial_idx / n_trials * 100;
+    $('#progress_bar').css('width', progress_pct + '%');
+
+    if (cur_trial_idx >= n_trials) {  // end of trials
+        {% if not is_practice %}
+            // set data to be submitted as comma separated values
+            $('#input_trial_ids').val(trial_ids.join());
+            $('#input_responses').val(response_keys.join());
+            $('#input_response_times').val(response_times.join());
+        {% endif %}
+
+        // show / hide page elements
+        $('#disp_container').hide();
+        $('#key_labels').hide();
+
+        $('#submit_data_notice').show();
+
+        // submit data and advance to next round or end of experiment
+        $('.otree-btn-next').click();
+    } else {  // run next trial, increase trial index
+        // set title
+        {% if is_practice %}
+            var trial_title = 'Trial ' + (cur_trial_idx + 1) + ' of ' + n_trials;
+        {% else %}
+            var trial_title = 'Block {{ subsession.round_number }} – Trial ' + (cur_trial_idx + 1) + ' of ' + n_trials;
+        {% endif %}
+
+        $('#trial_title').text(trial_title);
+
+        // run the trial and pass the current trial's data
+        runTrial(trials[cur_trial_idx]);
+        cur_trial_idx++;
+    }
+}
+
+/**
+ * Run a trial which is defined by array `trial_data` with trial ID, target class, target, prime class, prime.
+ * Sets several timers to orchestrate the display of the four trial stages.
+ */
+function runTrial(trial_data) {
+    var disp_img = $('#disp_img');
+
+    // 1. display prime after optional initial delay
+    setTimeout(trialPrime, {{ Constants.init_ms }}, disp_img, trial_data[3], trial_data[4]);
+
+    // 2. display blank screen after initial delay + prime duration
+    setTimeout(trialBlank, {{ Constants.init_ms }} + {{ Constants.prime_ms }}, disp_img);
+
+    // 3. display target after initial delay + prime duration + blank duration
+    var start_target_ms = {{ Constants.init_ms }} + {{ Constants.prime_ms }} + {{ Constants.blank_ms }};
+    setTimeout(trialTarget, start_target_ms, disp_img, trial_data[1], trial_data[2]);
+
+    // 4. display "noise mask" after initial delay + prime duration + blank duration + target duration
+    var start_mask_ms = start_target_ms + {{ Constants.target_ms }};
+
+    // decide when to allow key input
+    {% if Constants.allow_input_during_target_presentation %}
+        var start_input_ms = start_target_ms;
+    {% else %}
+        var start_input_ms = start_mask_ms;
+    {% endif %}
+
+    var mask_timer_id = setTimeout(trialMask, start_mask_ms, disp_img);
+    console.log('started mask timer', mask_timer_id);
+
+    // optionally display "hurry up" message
+    var hurry_up_msg_timer_id = null;
+
+    {% if Constants.hurry_up_message_after_ms %}
+        hurry_up_msg_timer_id = setTimeout(showHurryUpMessage, start_input_ms + {{ Constants.hurry_up_message_after_ms }});
+        console.log('started hurry up message timer', hurry_up_msg_timer_id);
+    {% endif %}
+
+    // start monitoring for key inputs either after or during target display
+    setTimeout(trialInput, start_input_ms, trial_data[0], mask_timer_id, hurry_up_msg_timer_id);
+}
+
+/**
+ * Display prime image `prime` from class `prime_class` in `disp_img` element.
+ */
+function trialPrime(disp_img, prime_class, prime) {
+    if (prime_class !== '') {
+        prime_class = prime_class + '/';
+    }
+
+    disp_img.attr('src', IMGROOT_PRIMES + '/' + prime_class + prime);
+    disp_img.show();
+}
+
+/**
+ * Hide `disp_img` element to show only a blank screen.
+ */
+function trialBlank(disp_img) {
+    disp_img.hide();
+}
+
+/**
+ * Display target image `target` from class `target_class` in `disp_img` element.
+ */
+function trialTarget(disp_img, target_class, target) {
+    if (target_class !== '') {
+        target_class = target_class + '/';
+    }
+
+    disp_img.attr('src', IMGROOT_TARGETS + '/' + target_class + target);
+    disp_img.show();
+}
+
+/**
+ * Display "noise mask" in `disp_img`.
+ */
+function trialMask(disp_img) {
+    disp_img.attr('src', IMGROOT_MASK);
+}
+
+/**
+ * Monitor key inputs and store them to trial ID `trial_id`. Cancel timers `mask_timer_id` and `hurry_up_msg_timer_id`
+ * in case of input.
+ */
+function trialInput(trial_id, mask_timer_id, hurry_up_msg_timer_id) {
+    var now = new Date().getTime();  // to store response time
+
+    // monitor key input
+    document.onkeydown = function (event) {
+        event.preventDefault();
+    };
+
+    document.onkeyup = function (event) {
+        event.preventDefault();
+        
+        if (CAPTURE_KEYCODES.indexOf(event.code) !== -1) {  // only do something if they key should be recorded
+            // calculate response time
+            var reaction_ms = new Date().getTime() - now;
+            console.log('key captured: ' + event.code + ' (after ' + reaction_ms + 'ms)');
+
+            // add data for later submit
+            trial_ids.push(trial_id);
+            response_keys.push(event.code);
+            response_times.push(reaction_ms);
+
+            // cancel timers
+            console.log('canceling mask timer', mask_timer_id);
+            clearTimeout(mask_timer_id);
+
+            if (hurry_up_msg_timer_id !== null) {
+                console.log('canceling hurry up message timer', hurry_up_msg_timer_id);
+                clearTimeout(hurry_up_msg_timer_id);
+            }
+
+            // advance to next trial
+            nextTrial();
+        }
+    };
+}
+
+/**
+ * Show a "hurry up" message.
+ */
+function showHurryUpMessage() {
+    $('#hurry_up_message').show();
+}
+
+/**
+ * Preload all images in `arr`. After loading, execute a function that can be set via ".done(fn)".
+ * Taken and adapted from http://www.javascriptkit.com/javatutors/preloadimagesplus.shtml
+ */
+function preloadimages(arr) {
+    var newimages = [], loadedimages = 0;
+    var postaction = function(){};
+    arr = (typeof arr!="object")? [arr] : arr;
+
+    function imageloadpost() {
+        loadedimages++;
+        if (loadedimages === arr.length){
+            postaction(newimages) //call postaction and pass in newimages array as parameter
+        }
+    }
+    for (var i=0; i<arr.length; i++){
+        newimages[i] = new Image();
+        newimages[i].src = arr[i];
+        newimages[i].onload = function() {
+            imageloadpost()
+        };
+        newimages[i].onerror = function() {
+            imageloadpost()
+        };
+    }
+    return { //return blank object with done() method
+        done: function(f){
+            postaction=f || postaction; //remember user defined callback functions to be called when images load
+        }
+    }
+}
+
+/**
+ *  Initialization of AMP experiment.
+ */
+$(function() {
+    // create a list of images to preload
+
+    var imgs = [
+        IMGROOT_MASK
+    ];
+
+    for (var i = 0; i < trials.length; i++) {
+        var trial = trials[i];
+        var target_class = trial[1];
+        if (target_class !== '') {
+            target_class = target_class + '/';
+        }
+
+        var prime_class = trial[3];
+        if (prime_class !== '') {
+            prime_class = prime_class + '/';
+        }
+
+
+        var img = IMGROOT_TARGETS + '/' + target_class + trial[2];
+        if (imgs.indexOf(img) === -1) {
+            imgs.push(img);
+        }
+
+        img = IMGROOT_PRIMES + '/' + prime_class + trial[4];
+        if (imgs.indexOf(img) === -1) {
+            imgs.push(img);
+        }
+    }
+
+    // preload those images ...
+    preloadimages(imgs).done(function(images) {
+        // ... and set up the experiment when done
+        console.log('preloaded', images.length, 'images');
+
+        $('#instructions_container .prepare_notice').hide();
+        $('#instructions_container .final_notice').show();
+
+        // experiment can be started with "space" key
+        document.onkeydown = function (event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+
+                document.onkeydown = null;
+                $('#instructions_container').hide();
+                $('#disp_container').show();
+                $('#key_labels').show();
+                $('#progress_container').show();
+
+                // start experiment
+                nextTrial();
+
+                return false;
+            }
+        }
+    });
+});
+
+</script>
+
+{% endblock %}
