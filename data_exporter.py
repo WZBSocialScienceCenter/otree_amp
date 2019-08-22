@@ -1,3 +1,11 @@
+"""
+Script to export recorded data in JSON format.
+
+August 2019
+Markus Konrad <markus.konrad@wzb.eu>
+"""
+
+
 import sys
 
 from otreeutils import scripts
