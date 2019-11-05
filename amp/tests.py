@@ -1,7 +1,7 @@
 """
 Affect Misattribution Procedure (AMP) experiment -- tests.
 
-August 2019
+November 2019
 Markus Konrad <markus.konrad@wzb.eu>
 """
 

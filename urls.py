@@ -1,7 +1,7 @@
 """
 custom URL patterns for otreeutils extension.
 
-August 2019
+November 2019
 Markus Konrad <markus.konrad@wzb.eu>
 """
 

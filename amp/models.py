@@ -7,7 +7,7 @@ on collection dynamic data with oTree using the package otreeutils [2].
 [1] https://doi.org/10.1016/j.jbef.2018.10.006
 [2] https://github.com/WZBSocialScienceCenter/otreeutils
 
-August 2019
+November 2019
 Markus Konrad <markus.konrad@wzb.eu>
 """
 

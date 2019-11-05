@@ -1,6 +1,6 @@
 # Affect Misattribution Procedure (AMP) experiment for oTree
 
-August 2019, Markus Konrad <markus.konrad@wzb.eu> / [Berlin Social Science Center](https://wzb.eu)
+November 2019, Markus Konrad <markus.konrad@wzb.eu> / [Berlin Social Science Center](https://wzb.eu)
 
 ## Introduction
 
@@ -9,6 +9,8 @@ This repository contains an application for [oTree](http://www.otree.org/) ([Che
 Images of targets (Chinese characters) in directory `_static/amp/targets` were published by Keith Payne at http://bkpayne.web.unc.edu/research-materials/.
 
 Makes use of the [otreeutils](https://github.com/WZBSocialScienceCenter/otreeutils) package ([Konrad 2018](https://doi.org/10.1016/j.jbef.2018.10.006)).
+
+**Screenshot of a trial:**
 
 ![look, a cat](_doc_imgs/trial-screenshot.png)
 
