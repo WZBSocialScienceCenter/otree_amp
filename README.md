@@ -68,10 +68,7 @@ The page sequence consists of four classes in `amp/pages.py`:
 
 ## Data export
 
-Since the measurements are stored using the custom data model `Trials` (see [this blog post](https://datascience.blog.wzb.eu/2016/10/31/using-custom-data-models-in-otree/) or [Konrad 2018](https://doi.org/10.1016/j.jbef.2018.10.006) for more on custom data models with oTree), the data is not exported automatically using oTree's data export page. However, two methods are provided to obtain the data in hierarchically structured JSON format:
-
-1. You can access the page `https://<SERVER>/custom_export/` (e.g. `http://localhost:8000/custom_export/` on a local development machine) which, after logging in, lets you download the data.
-2. You can use the `data_exporter.py` script, e.g. by executing `python data_exporter.py my_data.json` in the terminal, which will store the JSON data to `my_data.json`.
+You can export the data from the "Data" page (`https://<yourserver>/export`) via the *iat (custom)* links. If you have *otreeutils* installed, you can also use the `data_exporter.py` script by executing `python data_exporter.py my_data.json` in the terminal, which will store all collected data in JSON format to `my_data.json`.
 
 For later processing of the JSON data, you may use the `jsonlite` package for R or the built-in `json` module in Python.
 

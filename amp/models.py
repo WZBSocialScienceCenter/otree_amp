@@ -7,7 +7,7 @@ on collection dynamic data with oTree using the package otreeutils [2].
 [1] https://doi.org/10.1016/j.jbef.2018.10.006
 [2] https://github.com/WZBSocialScienceCenter/otreeutils
 
-November 2019
+March 2021
 Markus Konrad <markus.konrad@wzb.eu>
 """
 
@@ -20,6 +20,7 @@ from otree.api import (
 
 # required for custom data models:
 from otree.db.models import Model, ForeignKey
+from otree.export import sanitize_for_csv
 
 
 author = 'Markus Konrad <markus.konrad@wzb.eu>'
@@ -248,7 +249,7 @@ class Trial(Model):
                                               # or *after* the target was displayed, depending on
                                               # Constants.allow_input_during_target_presentation
 
-    player = ForeignKey(Player)               # make a 1:n relationship between Player and Trial
+    player = ForeignKey(Player, on_delete=models.CASCADE)               # make a 1:n relationship between Player and Trial
 
     class CustomModelConf:
         """
@@ -262,3 +263,18 @@ class Trial(Model):
             'exclude_fields': ['player_id'],
             'link_with': 'player'
         }
+
+
+try:
+    from otreeutils.admin_extensions import custom_export
+except ImportError:
+    def custom_export(players):
+        """
+        Export all IAT trials together with the standard fields `session` and `participant_code`
+        """
+        fields_to_export = ['trial', 'prime', 'prime_class', 'target', 'target_class',
+                            'response_key', 'response_time_ms']
+        yield ['session', 'participant_code'] + fields_to_export
+        for trial in Trial.objects.all():
+            yield [trial.player.session.code, trial.player.participant.code] \
+                + [sanitize_for_csv(getattr(trial, f)) for f in fields_to_export]
