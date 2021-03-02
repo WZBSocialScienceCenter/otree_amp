@@ -87,7 +87,7 @@ Testing multiple combinations of Python and oTree versions is done using [tox](h
 
 ### 2021-03-03: v1.1.0 (oTree 3.3.x)
 
-- added compatibility with oTree 3.3.x ([PR #3](https://github.com/WZBSocialScienceCenter/otree_iat/pull/3) – thanks to [Christoph Semken](https://github.com/csemken))
+- added compatibility with oTree 3.3.x
 - dependency to otreeutils is now optional
 - added tox integration for testing multiple Python/oTree versions
 
