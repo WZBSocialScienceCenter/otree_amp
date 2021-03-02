@@ -1,6 +1,6 @@
 # Affect Misattribution Procedure (AMP) experiment for oTree
 
-November 2019, Markus Konrad <markus.konrad@wzb.eu> / [Berlin Social Science Center](https://wzb.eu)
+March 2021, Markus Konrad <markus.konrad@wzb.eu> / [Berlin Social Science Center](https://wzb.eu)
 
 ## Introduction
 
@@ -8,7 +8,7 @@ This repository contains an application for [oTree](http://www.otree.org/) ([Che
 
 Images of targets (Chinese characters) in directory `_static/amp/targets` were published by Keith Payne at http://bkpayne.web.unc.edu/research-materials/.
 
-Makes use of the [otreeutils](https://github.com/WZBSocialScienceCenter/otreeutils) package ([Konrad 2018](https://doi.org/10.1016/j.jbef.2018.10.006)).
+Optionally makes use of the [otreeutils](https://github.com/WZBSocialScienceCenter/otreeutils) package ([Konrad 2018](https://doi.org/10.1016/j.jbef.2018.10.006)).
 
 **Screenshot of a trial:**
 
@@ -28,11 +28,16 @@ Makes use of the [otreeutils](https://github.com/WZBSocialScienceCenter/otreeuti
 
 ## Requirements
 
-- Python 3.5 or higher (tested with Python 3.6)
-- otree 2.1.41
-- otreeutils 0.9.1
+- tested with Python 3.7 and Python 3.8
+- tested with otree 3.3.0 to otree 3.3.11
+
+oTree AMP may work with higher versions than specified here, but this is untested. 
 
 You can install the exact requirements using *pip*: `pip install -r requirements.txt`
+
+If you want to see live view of measurements during the experiment in the "data" view of oTree's admin panel, you additional need to install *[otreeutils](https://github.com/WZBSocialScienceCenter/otreeutils)* version 0.10.0 or newer: `pip install otreeutils[admin]`.
+
+If you want to use oTree AMP with an older version of oTree, you may try a previous release as listed under *Releases* on the right side. To know which version of oTree AMP works with which version of oTree, see the *Changes* section below.
 
 ## Configuration
 
@@ -68,16 +73,27 @@ The page sequence consists of four classes in `amp/pages.py`:
 
 ## Data export
 
-Since the measurements are stored using the custom data model `Trials` (see [this blog post](https://datascience.blog.wzb.eu/2016/10/31/using-custom-data-models-in-otree/) or [Konrad 2018](https://doi.org/10.1016/j.jbef.2018.10.006) for more on custom data models with oTree), the data is not exported automatically using oTree's data export page. However, two methods are provided to obtain the data in hierarchically structured JSON format:
-
-1. You can access the page `https://<SERVER>/custom_export/` (e.g. `http://localhost:8000/custom_export/` on a local development machine) which, after logging in, lets you download the data.
-2. You can use the `data_exporter.py` script, e.g. by executing `python data_exporter.py my_data.json` in the terminal, which will store the JSON data to `my_data.json`.
+You can export the data from the "Data" page (`https://<yourserver>/export`) via the *iat (custom)* links. If you have *otreeutils* installed, you can also use the `data_exporter.py` script by executing `python data_exporter.py my_data.json` in the terminal, which will store all collected data in JSON format to `my_data.json`.
 
 For later processing of the JSON data, you may use the `jsonlite` package for R or the built-in `json` module in Python.
 
 ## Tests
 
 Automated tests are implemented in `amp/tests.py` and can be run via `otree test amp`.
+
+Testing multiple combinations of Python and oTree versions is done using [tox](https://tox.readthedocs.io/). You can install the package *tox* via pip and then run `tox` on the command line.
+
+## Code changes
+
+### 2021-03-03: v1.1.0 (oTree 3.3.x)
+
+- added compatibility with oTree 3.3.x ([PR #3](https://github.com/WZBSocialScienceCenter/otree_iat/pull/3) – thanks to [Christoph Semken](https://github.com/csemken))
+- dependency to otreeutils is now optional
+- added tox integration for testing multiple Python/oTree versions
+
+### 2019-21-08: v1.0.0 (oTree 2.1.x)
+
+- initial release
 
 ## License
 
